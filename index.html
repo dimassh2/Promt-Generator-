@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Prompt Architect</title>
+    
+    <!-- Tailwind CSS from CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Embedded CSS Styles -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* bg-gray-900 */
+            color: #f9fafb; /* text-gray-50 */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .form-container {
+            min-height: 350px; /* Memberi tinggi minimum agar tidak melompat saat konten berubah */
+        }
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f2937; /* bg-gray-800 */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563; /* bg-gray-600 */
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280; /* bg-gray-500 */
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+    <div id="app" class="container mx-auto max-w-2xl p-4 sm:p-6 md:p-8 min-h-screen flex flex-col justify-center">
+
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-600">
+                Prompt Architect
+            </h1>
+            <p class="text-gray-400 mt-2">Wujudkan imajinasi Anda menjadi prompt AI yang sempurna.</p>
+        </header>
+
+        <!-- Intro Screen -->
+        <main id="intro-screen" class="text-center fade-in">
+            <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl border border-gray-700">
+                <h2 class="text-2xl font-semibold mb-4 text-white">Siap Merancang?</h2>
+                <p class="text-gray-300 mb-8 max-w-md mx-auto">
+                    Jawab 8 pertanyaan singkat mengenai ide Anda. Biarkan AI kami menyusunnya menjadi sebuah prompt yang detail dan siap digunakan untuk menghasilkan gambar terbaik.
+                </p>
+                <button id="start-btn" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:ring-opacity-50">
+                    Mulai Merancang
+                </button>
+            </div>
+        </main>
+
+        <!-- Wizard Screen -->
+        <main id="wizard-screen" class="hidden">
+            <div class="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden">
+                <!-- Progress Bar -->
+                <div class="w-full bg-gray-700 rounded-full h-2.5">
+                    <div id="progress-bar" class="bg-gradient-to-r from-purple-500 to-indigo-600 h-2.5 rounded-full transition-all duration-500" style="width: 12.5%"></div>
+                </div>
+
+                <div class="p-8 form-container flex flex-col justify-center">
+                    <div id="question-container" class="fade-in">
+                        <!-- Pertanyaan akan dimuat di sini oleh JS -->
+                    </div>
+                </div>
+
+                <!-- Navigation -->
+                <div class="bg-gray-800/50 px-8 py-4 flex justify-between items-center border-t border-gray-700">
+                    <span id="step-counter" class="text-sm text-gray-400">Langkah 1 dari 8</span>
+                    <button id="next-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 disabled:bg-gray-500 disabled:cursor-not-allowed disabled:transform-none">
+                        Lanjut
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <!-- Loading Screen -->
+        <main id="loading-screen" class="hidden text-center fade-in">
+             <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl border border-gray-700 flex flex-col items-center justify-center min-h-[350px]">
+                <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-600 h-12 w-12 mb-4 animate-spin" style="border-top-color: #6366f1;"></div>
+                <h2 class="text-2xl font-semibold text-white">AI sedang meracik...</h2>
+                <p class="text-gray-400 mt-2">Mohon tunggu sejenak, kami sedang menyempurnakan prompt Anda.</p>
+            </div>
+        </main>
+
+        <!-- Result Screen -->
+        <main id="result-screen" class="hidden">
+            <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl border border-gray-700 fade-in">
+                <h2 class="text-2xl font-semibold mb-4 text-center text-white">Prompt Anda Telah Sempurna!</h2>
+                <div class="relative bg-gray-900 p-4 rounded-lg mb-6 border border-gray-700">
+                    <p id="result-prompt" class="text-gray-300 whitespace-pre-wrap"></p>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <button id="copy-btn" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-green-500 focus:ring-opacity-50">
+                        Salin Prompt
+                    </button>
+                    <button id="restart-btn" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-gray-500 focus:ring-opacity-50">
+                        Coba Lagi
+                    </button>
+                </div>
+                 <p id="copy-feedback" class="text-center text-green-400 mt-4 h-5"></p>
+            </div>
+        </main>
+        
+        <footer class="text-center mt-8 text-gray-500 text-sm">
+            <p>Ditenagai oleh Google Gemini</p>
+        </footer>
+    </div>
+
+    <!-- Embedded JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Definisikan semua elemen UI
+            const screens = {
+                intro: document.getElementById('intro-screen'),
+                wizard: document.getElementById('wizard-screen'),
+                loading: document.getElementById('loading-screen'),
+                result: document.getElementById('result-screen'),
+            };
+
+            const buttons = {
+                start: document.getElementById('start-btn'),
+                next: document.getElementById('next-btn'),
+                copy: document.getElementById('copy-btn'),
+                restart: document.getElementById('restart-btn'),
+            };
+
+            const ui = {
+                progressBar: document.getElementById('progress-bar'),
+                questionContainer: document.getElementById('question-container'),
+                stepCounter: document.getElementById('step-counter'),
+                resultPrompt: document.getElementById('result-prompt'),
+                copyFeedback: document.getElementById('copy-feedback'),
+            };
+
+            // Data untuk wizard
+            const questions = [
+                { id: 'subject', label: 'Siapa atau apa fokus utama gambar Anda?', placeholder: 'Contoh: Seorang astronot, seekor naga fantasi' },
+                { id: 'details', label: 'Jelaskan detail fisik & aktivitas subjek.', placeholder: 'Contoh: Memakai zirah futuristik, duduk di atas tumpukan emas' },
+                { id: 'style', label: 'Apa gaya visual yang Anda inginkan?', placeholder: 'Contoh: Fotorealistis, Anime 90-an, Lukisan cat minyak' },
+                { id: 'environment', label: 'Di mana lokasi atau latar belakangnya?', placeholder: 'Contoh: Planet Mars, di dalam kastil kuno, hutan lebat' },
+                { id: 'lighting', label: 'Bagaimana pencahayaan dalam gambar?', placeholder: 'Contoh: Cahaya senja keemasan, lampu neon terang, dramatis' },
+                { id: 'colors', label: 'Palet warna apa yang dominan?', placeholder: 'Contoh: Biru dan emas, monokromatik, warna-warni pastel' },
+                { id: 'composition', label: 'Dari sudut mana gambar ini diambil?', placeholder: 'Contoh: Close-up, Full body shot, Low angle view' },
+                { id: 'mood', label: 'Apa perasaan atau vibe yang ingin ditangkap?', placeholder: 'Contoh: Tenang dan damai, epik dan menegangkan, melankolis' },
+            ];
+
+            // State aplikasi
+            let currentStep = 0;
+            const userAnswers = {};
+
+            // Fungsi untuk berpindah antar layar
+            function showScreen(screenName) {
+                Object.values(screens).forEach(screen => screen.classList.add('hidden'));
+                screens[screenName].classList.remove('hidden');
+            }
+
+            // Fungsi untuk menampilkan pertanyaan saat ini
+            function renderQuestion() {
+                const question = questions[currentStep];
+                ui.questionContainer.innerHTML = `
+                    <div class="fade-in">
+                        <label for="${question.id}" class="block text-xl sm:text-2xl font-semibold mb-4 text-white">${question.label}</label>
+                        <input type="text" id="${question.id}" name="${question.id}" class="w-full bg-gray-700 border border-gray-600 text-white text-lg rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-4 placeholder-gray-400" placeholder="${question.placeholder}" autocomplete="off">
+                    </div>
+                `;
+                const input = document.getElementById(question.id);
+                if (userAnswers[question.id]) {
+                    input.value = userAnswers[question.id];
+                }
+                input.focus();
+                
+                input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        buttons.next.click();
+                    }
+                });
+            }
+
+            // Fungsi untuk memperbarui UI wizard
+            function updateWizardUI() {
+                const progress = ((currentStep + 1) / questions.length) * 100;
+                ui.progressBar.style.width = `${progress}%`;
+                ui.stepCounter.textContent = `Langkah ${currentStep + 1} dari ${questions.length}`;
+                buttons.next.textContent = (currentStep === questions.length - 1) ? 'Buat Prompt Saya' : 'Lanjut';
+            }
+
+            // Event listener untuk memulai wizard
+            buttons.start.addEventListener('click', () => {
+                currentStep = 0;
+                showScreen('wizard');
+                renderQuestion();
+                updateWizardUI();
+            });
+
+            // Event listener untuk tombol lanjut/buat
+            buttons.next.addEventListener('click', () => {
+                const currentQuestion = questions[currentStep];
+                const input = document.getElementById(currentQuestion.id);
+                
+                if (!input.value.trim()) {
+                    input.classList.add('border-red-500', 'animate-pulse');
+                    setTimeout(() => input.classList.remove('border-red-500', 'animate-pulse'), 1500);
+                    return;
+                }
+                
+                userAnswers[currentQuestion.id] = input.value.trim();
+
+                if (currentStep < questions.length - 1) {
+                    currentStep++;
+                    renderQuestion();
+                    updateWizardUI();
+                } else {
+                    generatePrompt();
+                }
+            });
+
+            // Fungsi untuk memanggil Gemini API
+            async function generatePrompt() {
+                showScreen('loading');
+
+                const systemPrompt = `Anda adalah seorang 'Prompt Architect' ahli untuk model AI generator gambar seperti Midjourney, Stable Diffusion, dan DALL-E. Tugas Anda adalah mengambil ide-ide sederhana dari pengguna dan mengembangkannya menjadi sebuah prompt yang kaya, detail, dan kompatibel secara universal.
+
+Strukturkan output akhir sebagai satu paragraf tunggal berisi frasa-frasa deskriptif yang dipisahkan oleh koma. JANGAN gunakan format list atau penomoran.
+
+Sempurnakan input pengguna dengan menambahkan kata kunci teknis yang relevan, istilah artistik, dan kata sifat deskriptif. Tambahkan "booster" umum seperti 'hyper-detailed', 'photorealistic', '8K', 'cinematic lighting', 'trending on ArtStation', 'Unreal Engine 5', 'sharp focus' jika sesuai untuk memaksimalkan kualitas gambar.
+
+Berikut adalah input dari pengguna:
+- Subjek Utama: ${userAnswers.subject || 'tidak ada'}
+- Detail Subjek: ${userAnswers.details || 'tidak ada'}
+- Gaya Visual: ${userAnswers.style || 'tidak ada'}
+- Latar/Lingkungan: ${userAnswers.environment || 'tidak ada'}
+- Pencahayaan: ${userAnswers.lighting || 'tidak ada'}
+- Warna Dominan: ${userAnswers.colors || 'tidak ada'}
+- Komposisi/Sudut Pandang: ${userAnswers.composition || 'tidak ada'}
+- Emosi/Suasana: ${userAnswers.mood || 'tidak ada'}
+
+Berdasarkan input ini, hasilkan satu paragraf prompt yang koheren, detail, dan sangat deskriptif. Langsung berikan hasilnya tanpa kalimat pembuka atau penutup.`;
+
+                try {
+                    // PENTING: Anda perlu memasukkan API Key Anda sendiri di sini.
+                    // Dapatkan di https://aistudio.google.com/
+                    const apiKey = "AIzaSyDsYYk1yC3nBQvGAMdKPUoK5Nbu8GkJzK8"; // <-- MASUKKAN API KEY GEMINI ANDA DI SINI
+
+                    if (!apiKey) {
+                        throw new Error("API Key untuk Gemini belum dimasukkan. Silakan edit file index.html dan masukkan API Key Anda.");
+                    }
+
+                    let chatHistory = [{ role: "user", parts: [{ text: systemPrompt }] }];
+                    const payload = { contents: chatHistory };
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(`HTTP error! status: ${response.status} - ${errorData.error.message}`);
+                    }
+
+                    const result = await response.json();
+                    
+                    if (result.candidates && result.candidates[0].content && result.candidates[0].content.parts) {
+                        const generatedText = result.candidates[0].content.parts[0].text;
+                        ui.resultPrompt.textContent = generatedText;
+                    } else {
+                        throw new Error("Struktur respons API tidak valid atau konten kosong.");
+                    }
+                    
+                    showScreen('result');
+                } catch (error) {
+                    console.error("Error calling Gemini API:", error);
+                    ui.resultPrompt.textContent = "Maaf, terjadi kesalahan saat membuat prompt.\n\nDetail Error: " + error.message;
+                    showScreen('result');
+                }
+            }
+
+            // Fungsi untuk menyalin prompt
+            buttons.copy.addEventListener('click', () => {
+                const textToCopy = ui.resultPrompt.textContent;
+                
+                const textArea = document.createElement('textarea');
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    ui.copyFeedback.textContent = 'Prompt berhasil disalin!';
+                    buttons.copy.textContent = 'Berhasil Disalin!';
+                    buttons.copy.classList.replace('bg-green-600', 'bg-blue-600');
+                    buttons.copy.classList.replace('hover:bg-green-700', 'hover:bg-blue-700');
+                } catch (err) {
+                    console.error('Gagal menyalin teks: ', err);
+                    ui.copyFeedback.textContent = 'Gagal menyalin.';
+                }
+                document.body.removeChild(textArea);
+                
+                setTimeout(() => {
+                    ui.copyFeedback.textContent = '';
+                    buttons.copy.textContent = 'Salin Prompt';
+                    buttons.copy.classList.replace('bg-blue-600', 'bg-green-600');
+                    buttons.copy.classList.replace('hover:bg-blue-700', 'hover:bg-green-700');
+                }, 2000);
+            });
+
+            // Fungsi untuk memulai dari awal
+            buttons.restart.addEventListener('click', () => {
+                currentStep = 0;
+                for (const key in userAnswers) {
+                    delete userAnswers[key];
+                }
+                ui.resultPrompt.textContent = '';
+                ui.copyFeedback.textContent = '';
+                showScreen('intro');
+            });
+
+            // Mulai aplikasi
+            showScreen('intro');
+        });
+    </script>
+</body>
+</html>
+
